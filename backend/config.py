@@ -1,5 +1,4 @@
 # backend/config.py
-# Acest fișier conține toate variabilele de configurare și secretele
 SECRET_KEY = 'Gusterul12#' 
 
 # --- Configurarea Conexiunii la MSSQL Server ---

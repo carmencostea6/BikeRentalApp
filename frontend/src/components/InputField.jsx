@@ -13,7 +13,6 @@ const InputField = ({ label, type, name, value, onChange, required, maxLength })
             onChange={onChange} 
             required={required} 
             maxLength={maxLength}
-            // Am marit padding-ul vertical (py-3) pentru a face loc iconitei
             className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-inner focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 bg-white" 
         />
     </div>

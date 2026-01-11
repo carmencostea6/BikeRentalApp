@@ -28,7 +28,7 @@ const AuthPage = ({ currentView, setCurrentView, setIsLoggedIn, setUser, showMes
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Functia de 'helper' pentru validare
+  // Functia de  validare
   const all = (...values) => values.every(v => v && String(v).trim() !== '');
 
   const handleSubmit = async (e) => {
@@ -40,7 +40,6 @@ const AuthPage = ({ currentView, setCurrentView, setIsLoggedIn, setUser, showMes
     
     let payload;
     if (isLogin) {
-        // Payload pentru Login
         payload = { email: formData.email, parola: formData.parola };
         if (!all(payload.email, payload.parola)) {
             showMessage(false, "Email și Parolă sunt obligatorii.");
@@ -49,7 +48,7 @@ const AuthPage = ({ currentView, setCurrentView, setIsLoggedIn, setUser, showMes
             return;
         }
     } else {
-        // Payload pentru Register
+        // Inregistrare
         payload = { 
             email: formData.email, 
             parola: formData.parola,
@@ -62,7 +61,6 @@ const AuthPage = ({ currentView, setCurrentView, setIsLoggedIn, setUser, showMes
             numar: formData.numar || null,
             oras: formData.oras || null
         };
-        // Validare doar pe campurile NOT NULL
         if (!all(payload.email, payload.parola, payload.nume, payload.prenume, payload.cnp, payload.telefon, payload.sex)) {
              showMessage(false, "Câmpurile marcate cu * sunt obligatorii.");
              setIsProcessing(false);
@@ -74,9 +72,7 @@ const AuthPage = ({ currentView, setCurrentView, setIsLoggedIn, setUser, showMes
     try {
         const response = await fetch(url, {
             method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json' 
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
             credentials: 'include' 
         });
@@ -85,14 +81,21 @@ const AuthPage = ({ currentView, setCurrentView, setIsLoggedIn, setUser, showMes
 
         if (data.success) {
             showMessage(true, data.message);
+            
             if (isLogin) {
                 setIsLoggedIn(true);
-                setUser(data.user); // Serverul Python trimite datele utilizatorului
-                setCurrentView(VIEWS.HOME);
+                setUser(data.user);
+                
+                // --- MODIFICARE PENTRU ADMIN ---
+                if (data.user.Rol === 'admin') {
+                    console.log("Admin detectat! Redirectare catre Dashboard Admin...");
+                    setCurrentView(VIEWS.ADMIN_DASHBOARD);
+                } else {
+                    setCurrentView(VIEWS.HOME);
+                }
+
             } else {
-                // Dupa inregistrare, trimite la Login
                 setCurrentView(VIEWS.LOGIN);
-                // Resetam formularul complet
                 setFormData({ email: '', parola: '', nume: '', prenume: '', cnp: '', telefon: '', sex: 'F', strada: '', numar: '', oras: '' });
             }
         } else {
@@ -101,7 +104,7 @@ const AuthPage = ({ currentView, setCurrentView, setIsLoggedIn, setUser, showMes
 
     } catch (error) {
         console.error("Eroare la apelul API:", error);
-        showMessage(false, "Eroare de rețea. Serverul Python (backend) nu răspunde.");
+        showMessage(false, "Eroare de rețea. Serverul nu răspunde.");
     } finally {
         setIsProcessing(false);
         setIsLoading(false);
@@ -109,7 +112,7 @@ const AuthPage = ({ currentView, setCurrentView, setIsLoggedIn, setUser, showMes
   };
 
   return (
-    // Centrare verticala si orizontala
+    // Centrare 
     <div className="flex items-center justify-center w-full px-4 flex-grow"> 
       <div className="bg-white p-6 sm:p-10 rounded-2xl shadow-2xl max-w-lg w-full border-t-8 border-indigo-600 text-center mx-auto">
 
@@ -141,7 +144,7 @@ const AuthPage = ({ currentView, setCurrentView, setIsLoggedIn, setUser, showMes
             </button>
           </div>
 
-          {/* Campuri suplimentare pentru Inregistrare */}
+          {/* Campuri  pentru Inregistrare */}
           {!isLogin && (
             <>
               <div className="grid grid-cols-2 gap-4">

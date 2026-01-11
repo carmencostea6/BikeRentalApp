@@ -1,8 +1,8 @@
 # backend/app/routes/auth.py
 from flask import Blueprint, request, jsonify, session
 import pyodbc
-import re # Importam regex pentru validari
-from app.db import get_db_connection, close_db_connection # Importam functiile de BD
+import re 
+from app.db import get_db_connection, close_db_connection 
 
 auth_bp = Blueprint('auth_api', __name__, url_prefix='/api')
 
@@ -12,7 +12,7 @@ def register():
     data = request.json
     print(f">>> Date primite pentru INREGISTRARE: {data}")
 
-    # Extragem toate datele din payload
+    # Extrag toate datele din payload
     email = data.get('email')
     parola = data.get('parola')
     nume = data.get('nume')
@@ -22,7 +22,7 @@ def register():
     sex = data.get('sex')
     
     strada = data.get('strada') or None
-    numar_raw = data.get('numar') # Primim ca string
+    numar_raw = data.get('numar') # ca string
     oras = data.get('oras') or None
     # --- Incep Validari ---
     if not all([email, parola, nume, prenume, cnp, telefon, sex]):
@@ -41,7 +41,7 @@ def register():
     def cnp_valid(cnp):
         if len(cnp) != 13 or not cnp.isdigit():
             return False, "CNP-ul trebuie să conțină exact 13 cifre."
-        if cnp[0] not in "123456": # Simplificare - doar verificam prima cifra
+        if cnp[0] not in "123456": # Simplificare - doar verific prima cifra
             return False, "Prima cifră a CNP-ului este invalidă."
         return True, None
     
@@ -59,7 +59,6 @@ def register():
             print("!!! Eroare: Numarul strazii nu este un integer valid.")
             return jsonify({"success": False, "message": "Câmpul 'Număr' trebuie să fie un număr valid (sau lăsat gol)."}), 400
 
-    # --- Sfarsit Validari ---
 
     conn = get_db_connection()
     if not conn:
@@ -103,7 +102,7 @@ def register():
     except pyodbc.Error as e:
         print(f"!!! Eroare PYODBC (posibil Truncare): {e}")
         if e.args[0] == '22001':
-            return jsonify({"success": False, "message": "Datele introduse sunt prea lungi pentru un câmp (ex: Strada max 10 caractere)."}), 400
+            return jsonify({"success": False, "message": "Datele introduse sunt prea lungi pentru un câmp."}), 400
         return jsonify({"success": False, "message": f"Eroare SQL: {str(e)}"}), 500
         
     except Exception as e:
@@ -131,17 +130,22 @@ def login():
 
     try:
         print(">>> Cautare client...")
-        cursor.execute("SELECT ClientID, Nume, Prenume FROM Clienti WHERE Email = ? AND Parola = ?", (email, parola))
+        #  Selectez si 'Rol' ( ISNULL - fallback daca rolul e NULL)
+        cursor.execute("""
+            SELECT ClientID, Nume, Prenume, ISNULL(Rol, 'user') as Rol 
+            FROM Clienti 
+            WHERE Email = ? AND Parola = ?
+        """, (email, parola))
         
         client = cursor.fetchone()
         
         if client:
-            print(">>> Client gasit!")
-            # Stocam datele in sesiune
+            print(f">>> Client gasit! Rol: {client.Rol}")
             session['logged_in'] = True
             session['client_id'] = client.ClientID
             session['nume'] = client.Nume.strip()
             session['prenume'] = client.Prenume.strip()
+            session['rol'] = client.Rol.strip() 
 
             return jsonify({
                 "success": True,
@@ -150,7 +154,8 @@ def login():
                     "ClientID": client.ClientID,
                     "NumeComplet": f"{client.Nume.strip()} {client.Prenume.strip()}",
                     "Nume": client.Nume.strip(),
-                    "Prenume": client.Prenume.strip()
+                    "Prenume": client.Prenume.strip(),
+                    "Rol": client.Rol.strip() 
                 }
             }), 200
         else:
@@ -163,10 +168,9 @@ def login():
     finally:
         close_db_connection(conn, cursor)
 
-
 @auth_bp.route('/logout', methods=['POST'])
 def logout():
     """Ruta pentru delogare."""
     print(">>> Delogare utilizator.")
-    session.clear() # Stergem toata sesiunea
+    session.clear() 
     return jsonify({"success": True, "message": "Delogare reușită."}), 200
