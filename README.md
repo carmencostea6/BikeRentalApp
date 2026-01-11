@@ -47,7 +47,7 @@ Proiectul este construit folosind o arhitectură modulară:
 * Actualizează string-ul de conectare în fișierul de configurare al backend-ului (app.py sau config.py).
 
 2. Backend (Python)
-' ' '
+```
 cd backend
 # Creare mediu virtual (opțional)
 python -m venv venv
@@ -55,12 +55,12 @@ python -m venv venv
 pip install -r requirements.txt
 # Rulare server
 python app.py
-' ' '
+```
 3. Frontend (React)
-' ' '
+```
 cd frontend
 # Instalare dependențe node
 npm install
 # Pornire aplicație
 npm run dev
-' ' '
+```
